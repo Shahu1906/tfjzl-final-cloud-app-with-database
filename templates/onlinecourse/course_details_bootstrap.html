@@ -8,42 +8,57 @@
 </head>
 <body>
 <div class="container mt-4">
-    <h2>{{ course.name }}</h2>
-    <p class="text-muted">{{ course.description }}</p>
 
+    <!-- Course name and description -->
+    <h1 class="display-4">{{ course.name }}</h1>
+    <p class="lead text-muted">{{ course.description }}</p>
+
+    <!-- All lessons of the course -->
+    <h3 class="mt-4">Lessons</h3>
     <div class="card-columns">
-        {% for lesson in course.lesson_set.all %}
+        {% for lesson in course.lesson_set.all|dictsort:"order" %}
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Lesson {{ lesson.order|add:1 }}: {{ lesson.title }}</h5>
+                <h5 class="card-title">Lesson {{ forloop.counter }}: {{ lesson.title }}</h5>
                 <p class="card-text">{{ lesson.content }}</p>
             </div>
         </div>
+        {% empty %}
+        <p>No lessons available for this course.</p>
         {% endfor %}
     </div>
 
+    <!-- Exam: questions and choices -->
     {% if user.is_authenticated %}
     <hr>
-    <h4>Exam</h4>
+    <h3>Exam</h3>
     <form action="{% url 'onlinecourse:submit' course.id %}" method="post">
         {% csrf_token %}
         {% for question in course.question_set.all %}
         <div class="card mt-3">
-            <div class="card-header">{{ question.question_text }}</div>
+            <div class="card-header">
+                {{ forloop.counter }}. {{ question.question_text }}
+                <span class="badge badge-secondary float-right">{{ question.grade }} pts</span>
+            </div>
             <div class="card-body">
                 {% for choice in question.choice_set.all %}
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="choice_{{ choice.id }}"
-                           id="choice_{{ choice.id }}" value="{{ choice.id }}">
-                    <label class="form-check-label" for="choice_{{ choice.id }}">{{ choice.choice_text }}</label>
+                    <input type="checkbox" class="form-check-input"
+                           name="choice_{{ choice.id }}"
+                           id="choice_{{ choice.id }}"
+                           value="{{ choice.id }}">
+                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                        {{ choice.choice_text }}
+                    </label>
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endfor %}
-        <input class="btn btn-success mt-3" type="submit" value="Submit">
+        <input class="btn btn-success mt-3 mb-5" type="submit" value="Submit">
     </form>
     {% endif %}
+
 </div>
 </body>
 </html>
